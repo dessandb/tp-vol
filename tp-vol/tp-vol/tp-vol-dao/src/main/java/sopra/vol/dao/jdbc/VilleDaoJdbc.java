@@ -69,7 +69,7 @@ public class VilleDaoJdbc implements IVilleDao {
 			rs = ps.executeQuery();
 
 			if (rs.next()) {
-				String nom = rs.getString("name");
+				String nom = rs.getString("nom");
 
 				ville = new Ville(id, nom);
 			}

@@ -6,7 +6,7 @@ import java.util.List;
 public abstract class Client {
 	private Long id;
 	private String nom;
-	private List<Adresse> adresses = new ArrayList<Adresse>();
+	private Adresse adresse;
 	private List<Reservation> reservations = new ArrayList<Reservation>();
 
 	public Client() {
@@ -40,20 +40,20 @@ public abstract class Client {
 		this.nom = nom;
 	}
 
-	public List<Adresse> getAdresses() {
-		return adresses;
-	}
-
-	public void setAdresses(List<Adresse> adresses) {
-		this.adresses = adresses;
-	}
-
 	public List<Reservation> getReservations() {
 		return reservations;
 	}
 
 	public void setReservations(List<Reservation> reservations) {
 		this.reservations = reservations;
+	}
+
+	public Adresse getAdresse() {
+		return adresse;
+	}
+
+	public void setAdresse(Adresse adresse) {
+		this.adresse = adresse;
 	}
 
 }
