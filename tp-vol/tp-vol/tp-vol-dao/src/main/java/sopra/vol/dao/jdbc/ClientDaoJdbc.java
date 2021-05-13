@@ -5,118 +5,59 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.sun.tools.javac.code.Types;
-
 import sopra.vol.Application;
 import sopra.vol.dao.IClientDao;
-import sopra.vol.model.Adresse;
 import sopra.vol.model.Client;
 import sopra.vol.model.Entreprise;
 import sopra.vol.model.Particulier;
 import sopra.vol.model.StatutJuridique;
-import sopra.vol.model.Ville;
+
+
 
 
 public class ClientDaoJdbc implements IClientDao {
 
 	@Override
 	public List<Client> findAll() {
-		
 		List<Client> clients = new ArrayList<Client>();
 
 		Connection conn = null;
 		PreparedStatement ps = null;
 		ResultSet rs = null;
-		PreparedStatement ps2 = null;
-		//ResultSet rs2 = null;
-		
 
 		try {
 			conn = Application.getInstance().getConnection();
-			ps = conn.prepareStatement("SELECT id, type, nom, prenom, siret, numero_TVA,statut_juridique, adresse_id FROM client");
-			//ps2 = conn.prepareStatement("SELECT * FROM adresse where Adresse_ID = ?"); A faire dans adresse
+			ps = conn.prepareStatement("SELECT * FROM client");
 
 			rs = ps.executeQuery();
 
 			while (rs.next()) {
-				Long id = rs.getLong(1);
-				String type = rs.getString("type");
+				Long id = rs.getLong("id");
 				String nom = rs.getString("nom");
-				Long adresse_id = rs.getLong("adresse_id");
+				String type =rs.getString("TYPE");
 				
-				// on peux pas créer de clients directement car classe abstraite
-				if (type.equals("E")) {
-					Entreprise entreprise = new Entreprise(id, nom);
-					String siret = rs.getString("siret");
-					String numero_Tva = rs.getString("numero_TVA");
-					String statut_juridique = rs.getString("statut_juridique");
-					entreprise.setNumeroTVA(numero_Tva);
-					entreprise.setSiret(siret);					
-					entreprise.setStatutJuridique(StatutJuridique.valueOf(statut_juridique));
-					ps2.setLong(1, adresse_id);
-					//rs2 = ps2.executeQuery();
-					List<Adresse> adresses = new ArrayList<Adresse>();
-					if (rs.next()) {
-						String rue = rs.getString("rue");
-						String complement = rs.getString("complement");
-						String code_postal = rs.getString("code_postal");
-						String ville = rs.getString("ville");
-						String pays = rs.getString("pays");
-						
-						Adresse adr = new Adresse();
-						adr.setCodePostal(code_postal);
-						adr.setComplement(complement);
-						adr.setPays(pays);
-						adr.setRue(rue);
-						adr.setVille(ville);
-						adresses.add(adr);
-						// entreprise.setAdresse(adr)
-						
-					}
-					
-					entreprise.setAdresses(adresses);
-					clients.add(entreprise);
-					
+				if(type.equals("E")) {
+					String siret = rs.getString("SIRET");
+					StatutJuridique stat = StatutJuridique.valueOf(rs.getString("STATUT_JURIDIQUE"));
+					String numtva = rs.getString("NUMERO_TVA");
+					Entreprise ent= new Entreprise(id,nom);
+					ent.setNumeroTVA(numtva);
+					ent.setSiret(siret);
+					ent.setStatutJuridique(stat);
+					clients.add(ent);
 				}
-				
-				else if (type.equals("P")) {
-					Particulier particulier = new Particulier();
-					
-					String prenom = rs.getString("prenom");
-					
-					particulier.setPrenom(prenom);			
-					particulier.setId(id);
-					particulier.setNom(nom);					
-					
-					ps2.setLong(1, adresse_id);
-					rs2 = ps2.executeQuery();
-					List<Adresse> adresses = new ArrayList<Adresse>();
-										
-					while (rs2.next()) {
-						String rue = rs2.getString("rue");
-						String complement = rs2.getString("complement");
-						String code_postal = rs2.getString("code_postal");
-						String ville = rs2.getString("ville");
-						String pays = rs2.getString("pays");
-						
-						Adresse adr = new Adresse();
-						adr.setCodePostal(code_postal);
-						adr.setComplement(complement);
-						adr.setPays(pays);
-						adr.setRue(rue);
-						adr.setVille(ville);
-						adresses.add(adr);
-						
-					}
-					
-					particulier.setAdresses(adresses);
-					clients.add(particulier);
+				else if(type.equals("P")) {
+					String prenom=rs.getString("PRENOM");
+					Particulier part = new Particulier();
+					part.setId(id);
+					part.setNom(nom);
+					part.setPrenom(prenom);
+					clients.add(part);
 				}
-
-				
 			}
 
 		} catch (SQLException e) {
@@ -125,8 +66,6 @@ public class ClientDaoJdbc implements IClientDao {
 			try {
 				rs.close();
 				ps.close();
-				rs2.close();
-				ps2.close();
 				conn.close();
 			} catch (SQLException e) {
 				e.printStackTrace();
@@ -143,92 +82,37 @@ public class ClientDaoJdbc implements IClientDao {
 		Connection conn = null;
 		PreparedStatement ps = null;
 		ResultSet rs = null;
-		PreparedStatement ps2 = null;
-		ResultSet rs2 = null;
-		
 
 		try {
 			conn = Application.getInstance().getConnection();
-			ps = conn.prepareStatement("SELECT type, nom, prenom, siret, numero_TVA,statut_juridique, adresse_id FROM client WHERE id = ?");
-			ps2 = conn.prepareStatement("SELECT * FROM adresse where Adresse_ID = ?");
+			ps = conn.prepareStatement("SELECT * FROM client WHERE id = ?");
 
 			ps.setLong(1, id);
+
 			rs = ps.executeQuery();
-			
 
 			if (rs.next()) {
-				String type = rs.getString("type");
 				String nom = rs.getString("nom");
-				Long adresse_id = rs.getLong("adresse_id");
+				String type =rs.getString("TYPE");
 				
-				if( type.equals("E")) {
-				Entreprise entreprise = new Entreprise(id, nom);
-				String siret = rs.getString("siret");
-				String numero_Tva = rs.getString("numero_TVA");
-				String statut_juridique = rs.getString("statut_juridique");
-				entreprise.setNumeroTVA(numero_Tva);
-				entreprise.setSiret(siret);					
-				entreprise.setStatutJuridique(StatutJuridique.valueOf(statut_juridique));
-				ps2.setLong(1, adresse_id);
-				rs2 = ps2.executeQuery();
-				List<Adresse> adresses = new ArrayList<Adresse>();
-				while (rs2.next()) {
-					String rue = rs2.getString("rue");
-					String complement = rs2.getString("complement");
-					String code_postal = rs2.getString("code_postal");
-					String ville = rs2.getString("ville");
-					String pays = rs2.getString("pays");
-					
-					Adresse adr = new Adresse();
-					adr.setCodePostal(code_postal);
-					adr.setComplement(complement);
-					adr.setPays(pays);
-					adr.setRue(rue);
-					adr.setVille(ville);
-					adresses.add(adr);
-					
+				if(type.equals("E")) {
+					String siret = rs.getString("SIRET");
+					StatutJuridique stat = StatutJuridique.valueOf(rs.getString("STATUT_JURIDIQUE"));
+					String numtva = rs.getString("NUMERO_TVA");
+					Entreprise ent= new Entreprise(id,nom);
+					ent.setNumeroTVA(numtva);
+					ent.setSiret(siret);
+					ent.setStatutJuridique(stat);
+					return ent;
 				}
-				
-				entreprise.setAdresses(adresses);
-				return entreprise;
-					
-					
+				else if(type.equals("P")) {
+					String prenom=rs.getString("PRENOM");
+					Particulier part = new Particulier();
+					part.setId(id);
+					part.setNom(nom);
+					part.setPrenom(prenom);
+					return part;
 				}
-				
-				else if (type.equals("P")){
-					Particulier particulier = new Particulier();
-					
-					String prenom = rs.getString("prenom");
-					
-					particulier.setPrenom(prenom);			
-					particulier.setId(id);
-					particulier.setNom(nom);					
-					
-					ps2.setLong(1, adresse_id);
-					rs2 = ps2.executeQuery();
-					List<Adresse> adresses = new ArrayList<Adresse>();
-										
-					while (rs2.next()) {
-						String rue = rs2.getString("rue");
-						String complement = rs2.getString("complement");
-						String code_postal = rs2.getString("code_postal");
-						String ville = rs2.getString("ville");
-						String pays = rs2.getString("pays");
-						
-						Adresse adr = new Adresse();
-						adr.setCodePostal(code_postal);
-						adr.setComplement(complement);
-						adr.setPays(pays);
-						adr.setRue(rue);
-						adr.setVille(ville);
-						adresses.add(adr);
-						
-					}
-					
-					particulier.setAdresses(adresses);
-					return particulier;
-				}
-				
 			}
 
 		} catch (SQLException e) {
@@ -237,17 +121,14 @@ public class ClientDaoJdbc implements IClientDao {
 			try {
 				rs.close();
 				ps.close();
-				rs2.close();
-				ps2.close();
 				conn.close();
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}
 		}
-		return null;
 
+		return client;
 	}
-
 
 	@Override
 	public void create(Client obj) {
@@ -256,32 +137,23 @@ public class ClientDaoJdbc implements IClientDao {
 
 		try {
 			conn = Application.getInstance().getConnection();
-			ps = conn.prepareStatement("INSERT INTO client (type,nom, prenom, siret,numero_Tva, statut_juridique, adresse_Id) VALUES (?,?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS);
+			ps = conn.prepareStatement("INSERT INTO client (TYPE,NOM,PRENOM,SIRET,NUMERO_TVA,STATUT_JURIDIQUE) VALUES (?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS);
 
-			if (obj.getClass().getName().equals("Entreprise")) {
+			ps.setString(2, obj.getNom());
+			if(obj.getClass().getName().equals("Particulier")) {
+				ps.setString(1, "P");
+				ps.setString(3, ((Particulier) obj).getPrenom());
+				ps.setNull(4, Types.VARCHAR);
+				ps.setNull(5, Types.VARCHAR);
+				ps.setNull(6, Types.VARCHAR);
+			}
+			else if(obj.getClass().getName().equals("Particulier")) {
 				ps.setString(1, "E");
-				ps.setNull(3, java.sql.Types.VARCHAR);
+				ps.setNull(3,Types.VARCHAR);
 				ps.setString(4, ((Entreprise) obj).getSiret());
 				ps.setString(5, ((Entreprise) obj).getNumeroTVA());
 				ps.setString(6, ((Entreprise) obj).getStatutJuridique().toString());
 			}
-			
-			else if(obj.getClass().getName().equals("Particulier")) {
-				ps.setString(1, "P");
-				ps.setString(3, ((Particulier) obj).getPrenom());
-				ps.setNull(4, java.sql.Types.VARCHAR);
-				ps.setNull(5, java.sql.Types.VARCHAR);
-				ps.setNull(6, java.sql.Types.VARCHAR);				
-			}
-			
-			ps.setString(2, obj.getNom());
-			// if plus ! = not la condition
-			if (!(obj.getAdresses().isEmpty())) {
-				for (Adresse adr:obj.getAdresse()) {
-					ps.setLong(obj.getId(), adr.getId());
-				}
-			}
-			
 
 			int rows = ps.executeUpdate();
 
@@ -290,7 +162,7 @@ public class ClientDaoJdbc implements IClientDao {
 
 				if (keys.next()) {
 					Long id = keys.getLong(1);
-					ville.setId(id);
+					obj.setId(id);
 				}
 			} else {
 				throw new SQLException("Insertion en échec");
@@ -306,27 +178,83 @@ public class ClientDaoJdbc implements IClientDao {
 				e.printStackTrace();
 			}
 		}
-		
 	}
 
 	@Override
 	public void update(Client obj) {
-		// TODO Auto-generated method stub
-		
-	}
+		Connection conn = null;
+		PreparedStatement ps = null;
 
+		try {
+			conn = Application.getInstance().getConnection();
+			ps = conn.prepareStatement("UPDATE client SET TYPE=?,NOM=?,PRENOM=?,SIRET=?,NUMERO_TVA=?,STATUT_JURIDIQUE=? WHERE id = ?");
+
+			ps.setString(2, obj.getNom());
+			if(obj.getClass().getName().equals("Particulier")) {
+				ps.setString(1, "P");
+				ps.setString(3, ((Particulier) obj).getPrenom());
+				ps.setNull(4, Types.VARCHAR);
+				ps.setNull(5, Types.VARCHAR);
+				ps.setNull(6, Types.VARCHAR);
+			}
+			else if(obj.getClass().getName().equals("Particulier")) {
+				ps.setString(1, "E");
+				ps.setNull(3,Types.VARCHAR);
+				ps.setString(4, ((Entreprise) obj).getSiret());
+				ps.setString(5, ((Entreprise) obj).getNumeroTVA());
+				ps.setString(6, ((Entreprise) obj).getStatutJuridique().toString());
+			}
+
+			int rows = ps.executeUpdate();
+
+			if (rows != 1) {
+				throw new SQLException("Mise à jour en échec");
+			}
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				ps.close();
+				conn.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+	}
 	@Override
 	public void delete(Client obj) {
-		// TODO Auto-generated method stub
-		
+		deleteById(obj.getId());		
 	}
 
 	@Override
 	public void deleteById(Long id) {
-		// TODO Auto-generated method stub
+		Connection conn = null;
+		PreparedStatement ps = null;
+
+		try {
+			conn = Application.getInstance().getConnection();
+			ps = conn.prepareStatement("DELETE FROM client WHERE id = ?");
+
+			ps.setLong(1, id);
+
+			int rows = ps.executeUpdate();
+
+			if (rows != 1) {
+				throw new SQLException("Suppression en échec");
+			}
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				ps.close();
+				conn.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
 		
 	}
 	
-	
-
 }
